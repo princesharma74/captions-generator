@@ -34,35 +34,21 @@ class VideoConfig:
     bottom_margin_percent: float = 0.0 # Not used if centered logic applied
 
 @dataclass
-class SubtitleConfig:
-    """Configuration for ASS Subtitles."""
-    # Colors are in ASS Hex format: &HAABBGGRR
-    # Primary color (Fill) - White
-    primary_color: str = "&H00FFFFFF"
-    # Secondary color (Karaoke highlight) - Yellow (BGR: 00FFFF)
-    secondary_color: str = "&H0000FFFF" 
+class ManimConfig:
+    """Configuration for Manim Captions."""
+    font_name: str = "Arial Black"
+    font_size: int = 72
+    text_color: str = "#FFFFFF" # Hex for Manim
+    highlight_color: str = "#FFA500" # Orange
     
-    font_name: str = "Arial"
-    font_size: int = 60
-    # Alignment: 2 = Bottom Center, 5 = Top Center, 10 = Center of Screen (if using ASS numpad alignment)
-    # Standard ASS alignment: 1=Left, 2=Center, 3=Right (Subtitles)
-    # 5=Top Left? No, ASS numpad: 7 8 9, 4 5 6, 1 2 3.
-    # So 2 is Bottom Center.
-    # Alignment: 2 = Bottom Center, 5 = Top Center?
-    # ASS alignment (numpad): 
-    # 1=Bottom Left, 2=Bottom Center, 3=Bottom Right
-    # 4=Mid Left, 5=Mid Center, 6=Mid Right
-    # 7=Top Left, 8=Top Center, 9=Top Right
-    # User asked for "subtitles in the center".
-    alignment: int = 5 
-    margin_v: int = 50
-    outline_color: str = "&H00000000"
-    outline_width: int = 2
-    shadow_depth: int = 1
+    # Background Box
+    bg_color: str = "#000000"
+    bg_opacity: float = 0.8
+    corner_radius: float = 0.4
+    padding_h: float = 0.8 
+    padding_v: float = 0.4
     
-    # Premium styling options
-    bold: bool = False
-    border_style: int = 1 # 1=Outline, 3=Opaque Box
-    back_color: str = "&H80000000" # Background box color (if border_style=3)
-    margin_l: int = 10
-    margin_r: int = 10
+    # Layout (relative to center or edge)
+    # Manim coordinates are different, but we can stick to simple "bottom center" assumption for now
+    # or expose position offset.
+    bottom_offset: float = 1.5 # Units from bottom edge

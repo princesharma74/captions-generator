@@ -1,77 +1,45 @@
-# Karaoke Caption Generator
+# Caption Generator
 
-A Python tool to generate karaoke-style word-level highlighted subtitles for audio files and render them onto a video.
-
-## Available Templates
-
-You can choose from several pre-configured subtitle styles:
-
-- `default` - Standard white text with yellow highlights and black outline
-- `karaoke` - Serif font with cyan highlights and heavy outline
-- `cinematic` - Light gray text with minimal outline, top-aligned
-- `shorts` - Bold yellow text with red highlights for social media
-- `classic` - Minimal Helvetica font with NO outlines, clean professional look with word-by-word yellow highlighting
-- `premium` - **NEW!** Bold Arial Black font with dark rounded background box (per-line), orange highlights, and no outlines
-
-Use the `--template` or `-t` flag to select a template:
-
-```bash
-uv run python cli.py sample.mp3 --template classic
-```
+A Python tool to generate high-quality, karaoke-style highlighted subtitles for video content using **Manim**.
 
 ## Features
-- **Word-Level Precision**: Uses OpenAI Whisper for accurate word-level timestamps.
-- **Karaoke Highlighting**: Generates ASS subtitles with `{\k}` karaoke tags.
-- **2-Step Workflow**: Allows you to edit subtitles before burning them into the video.
-- **Customizable**: Configurable fonts, colors, and backgrounds via `config.py`.
 
-## Prerequisites
+- **Unified Background Strip**: Pixel-perfect rounded rectangle backdrop for better readability.
+- **Precision Highlighting**: Word-level synchronization with custom animations.
+- **High-Quality Rendering**: Uses Manim engine for sharp 1080p output.
+- **Automated Workflow**: Transcribes, renders, and merges audio in one command.
+
+## Requirements
 
 - Python 3.10+
-- FFmpeg (installed and accessible in PATH)
-- `uv` (recommended for dependency management)
+- FFmpeg (for audio processing)
+- Manim (`uv pip install manim`)
+- OpenAI Whisper (`uv pip install openai-whisper`)
+- SRT (`uv pip install srt`)
 
 ## Installation
 
 1.  Clone the repository.
 2.  Install dependencies:
     ```bash
-    uv pip install -r requirements.txt
+    uv pip install manim openai-whisper srt
     ```
-    *(If provided, otherwise install `openai-whisper`, `srt`)*
 
 ## Usage
 
-The main entry point is `cli.py`.
+Generate a caption video from an audio file:
 
-### 1. Simple Usage (One-Click)
-Generate subtitles and video in one go:
 ```bash
 uv run python cli.py your_audio.mp3
 ```
-This will create a timestamped folder in `outputs/` with the final video.
 
-### 2. Advanced Usage (2-Step Process)
+This will run the entire pipeline:
+1.  **Transcribe**: Generates `_raw.srt` using Whisper.
+2.  **Render**: Uses Manim to generate `_karaoke.mp4` with high-quality styling.
+3.  **Finalize**: Merges the original audio for high fidelity into `_final.mp4`.
 
-**Step 1: Generate Subtitles**
-```bash
-uv run python cli.py your_audio.mp3 --step 1
-```
-Output:
-- Creates `outputs/YYYYMMDD_HHMMSS/`
-- Contains `your_audio_raw.srt` (Editable timestamps)
-- Contains `your_audio.ass` (Generated karaoke styles)
-
-**Step 2: Render Video**
-After editing the subtitles if needed, run step 2, pointing to the work directory from step 1:
-```bash
-uv run python cli.py your_audio.mp3 --step 2 --work_dir outputs/2026xxxx_xxxxxx/
-```
-Output:
-- `your_audio_karaoke.mp4` inside the work directory.
+Output location: `outputs/{timestamp}/your_audio_final.mp4`
 
 ## Configuration
 
-Edit `config.py` to change:
-- `VideoConfig`: Background color, font size, resolution.
-- `SubtitleConfig`: Primary/Secondary colors, font, alignment.
+Visual styles (font, colors, background) can be adjusted in `config.py` and `templates.py`. The system uses the default style by default.

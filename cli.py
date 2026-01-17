@@ -3,31 +3,13 @@ import os
 import argparse
 import subprocess
 import shutil
-from datetime import timedelta
+from datetime import datetime
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import transcriber
-import ass_generator
 import video_processor
-from config import VideoConfig
-import templates
-
-def get_audio_duration(audio_path):
-    cmd = [
-        "ffprobe", 
-        "-v", "error", 
-        "-show_entries", "format=duration", 
-        "-of", "default=noprint_wrappers=1:nokey=1", 
-        audio_path
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    return float(result.stdout.strip())
-
-from datetime import datetime
-
-# ... imports ...
 
 def get_timestamped_dir(base_path):
     # outputs/YYYYMMDD_HHMMSS
@@ -35,8 +17,8 @@ def get_timestamped_dir(base_path):
     output_parent = os.path.join(os.path.dirname(base_path), "outputs")
     return os.path.join(output_parent, timestamp)
 
-def step_one_subtitles(audio_path, output_dir, template_name="default"):
-    print(f"--- [Step 1] Generating Subtitles for {audio_path} ---")
+def generate_captions(audio_path, output_dir):
+    print(f"--- Generating Captions for {audio_path} ---")
     
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -44,90 +26,67 @@ def step_one_subtitles(audio_path, output_dir, template_name="default"):
     base_name = os.path.splitext(os.path.basename(audio_path))[0]
     
     # 1. Transcribe
-    print("Transcribing...")
-    # Transcriber saves to same dir as audio usually? 
-    # Or we can check if we can control output.
-    # We will let it run and move.
-    
+    print("[1/3] Transcribing Audio...")
     raw_srt_generated = transcriber.transcribe_audio(audio_path)
     
     target_raw_srt = os.path.join(output_dir, f"{base_name}_raw.srt")
+    
+    # Move SRT to output dir logic
     if os.path.exists(raw_srt_generated):
-        # If it was generated in source dir, move it.
-        # But if source dir is output dir (unlikely), don't move.
         if os.path.abspath(raw_srt_generated) != os.path.abspath(target_raw_srt):
             shutil.move(raw_srt_generated, target_raw_srt)
-            print(f"Moved Raw SRT to: {target_raw_srt}")
-    else:
-        # Maybe it was already there or something went wrong
-        pass
-        
-    # Double check if target exists now
+            print(f"    Moved Raw SRT to: {target_raw_srt}")
+    
     if not os.path.exists(target_raw_srt):
         print(f"Error: Raw SRT not found at {target_raw_srt}")
         return
 
-    # 2. Generate ASS
-    print("Generating ASS...")
-    target_ass = os.path.join(output_dir, f"{base_name}.ass")
+    # 2. Render with Manim
+    print("[2/3] Rendering Video with Manim...")
     
-    # Load template config
-    sub_config = templates.get_template(template_name)
-    print(f"    Using Template: {template_name}")
+    # Set Environment Variables
+    env = os.environ.copy()
+    env["MANIM_AUDIO_PATH"] = os.path.abspath(audio_path)
+    env["MANIM_SRT_PATH"] = os.path.abspath(target_raw_srt)
     
-    ass_generator.generate_ass(target_raw_srt, target_ass, config=sub_config)
+    # Command
+    cmd = [
+        "manim", 
+        "-r", "1920,1080",
+        "--fps", "30",
+        "--disable_caching", 
+        "--media_dir", output_dir,
+        "manim_renderer.py", 
+        "CaptionScene"
+    ]
     
-    print(f"--- Step 1 Complete ---")
-    print(f"Work Directory: {output_dir}")
-    print(f"Subtitles: {target_ass}")
-    print(f"Please edit the subtitles if needed, then run Step 2:")
-    print(f"  uv run python cli.py {audio_path} --step 2 --work_dir {output_dir}")
-
-def step_two_video(audio_path, output_dir):
-    print(f"--- [Step 2] Rendering Video for {audio_path} ---")
+    manim_temp_out = os.path.join(output_dir, "videos", "manim_renderer", "1080p30", "CaptionScene.mp4")
     
-    if not os.path.exists(output_dir):
-        print(f"Error: Work directory {output_dir} does not exist.")
+    try:
+        subprocess.run(cmd, env=env, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error running Manim: {e}")
         return
 
-    base_name = os.path.splitext(os.path.basename(audio_path))[0]
-    
-    ass_path = os.path.join(output_dir, f"{base_name}.ass")
-    if not os.path.exists(ass_path):
-        print(f"ERROR: Subtitle file not found at {ass_path}")
-        print("Please ensure you have run Step 1 or provided the correct --work_dir")
+    if not os.path.exists(manim_temp_out):
+        print(f"Error: Manim output not found at {manim_temp_out}")
         return
-
-    output_video_path = os.path.join(output_dir, f"{base_name}_karaoke.mp4")
-    temp_bg_path = os.path.join(output_dir, f"{base_name}_bg.mp4")
-    
-    duration = get_audio_duration(audio_path)
-    config = VideoConfig()
-    
-    print(f"Generating background video ({duration}s)...")
-    video_processor.generate_blank_clip(duration, temp_bg_path, config)
-    
-    print(f"Burning subtitles...")
-    video_processor.merge_audio(
-        video_path=temp_bg_path,
-        audio_path=audio_path,
-        output_path=output_video_path,
-        subtitles_path=ass_path
-    )
-    
-    # Cleanup
-    if os.path.exists(temp_bg_path):
-        os.remove(temp_bg_path)
         
-    print(f"--- Step 2 Complete ---")
-    print(f"Final Video: {output_video_path}")
+    # 3. Final Audio Merge/Replace (Verification Step)
+    print("[3/3] Finalizing Audio...")
+    final_output = os.path.join(output_dir, f"{base_name}_final.mp4")
+    
+    # We replace audio track to ensure original high quality audio and perfect length sync (though Manim is usually good)
+    video_processor.replace_audio_track(manim_temp_out, audio_path, final_output)
+    
+    print(f"--- Process Complete ---")
+    print(f"Output Video: {final_output}")
+    print(f"Work Directory: {output_dir}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Caption Generation CLI")
+    parser = argparse.ArgumentParser(description="Caption Generation CLI (Manim)")
     parser.add_argument("audio_file", help="Path to input audio file")
-    parser.add_argument("--step", type=int, choices=[1, 2], help="Specific step to run (1=Subtitles, 2=Video). If omitted, runs both.")
-    parser.add_argument("--work_dir", help="Directory for input/output files. Required for Step 2 standalone. Defaults to new timestamped dir for Step 1/Both.")
-    parser.add_argument("--template", "-t", default="default", help="Subtitle style template (default, karaoke, cinematic, shorts)")
+    parser.add_argument("--work_dir", help="Optional work directory for outputs.")
     
     args = parser.parse_args()
     
@@ -139,22 +98,9 @@ def main():
     if args.work_dir:
         output_dir = args.work_dir
     else:
-        # If no dir specified, create a new timestamped one
         output_dir = get_timestamped_dir(args.audio_file)
-        
-        # If running ONLY step 2 without a dir, that's a problem
-        if args.step == 2:
-            print("Error: --work_dir is required when running only Step 2.")
-            return
 
-    if args.step == 1:
-        step_one_subtitles(args.audio_file, output_dir, args.template)
-    elif args.step == 2:
-        step_two_video(args.audio_file, output_dir)
-    else:
-        # Run both
-        step_one_subtitles(args.audio_file, output_dir, args.template)
-        step_two_video(args.audio_file, output_dir)
+    generate_captions(args.audio_file, output_dir)
 
 if __name__ == "__main__":
     main()

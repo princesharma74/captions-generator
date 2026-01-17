@@ -52,13 +52,10 @@ def concat_videos(video_files: List[str], output_file: str):
         if os.path.exists(list_file):
             os.remove(list_file)
 
-def merge_audio(video_path: str, audio_path: str, output_path: str, subtitles_path: str = None):
-    """Merges video with audio, cutting audio to video length if needed. Optionally burns subtitles."""
-    # Note: If video is generated from audio, they should match.
-    # We use ffmpeg to mux.
-    
+def replace_audio_track(video_path: str, audio_path: str, output_path: str):
+    """Replaces the audio track of a video with a new audio file."""
     if not os.path.exists(audio_path):
-        print(f"Warning: Audio file {audio_path} not found. Skipping merge.")
+        print(f"Warning: Audio file {audio_path} not found. Skipping audio replacement.")
         shutil.copy(video_path, output_path)
         return
 
@@ -66,43 +63,15 @@ def merge_audio(video_path: str, audio_path: str, output_path: str, subtitles_pa
         "ffmpeg",
         "-y",
         "-i", video_path,
-        "-i", audio_path
+        "-i", audio_path,
+        "-c:v", "copy", # Fast copy video stream
+        "-c:a", "aac",  # Encode audio to AAC
+        "-map", "0:v:0", # Map first video stream from input 0
+        "-map", "1:a:0", # Map first audio stream from input 1
+        "-shortest",
+        output_path
     ]
     
-    # Video Codec Logic
-    if subtitles_path and os.path.exists(subtitles_path):
-        # We must re-encode to burn subtitles
-        print(f"Burning subtitles from: {subtitles_path}")
-        
-        # FFmpeg filter path handling is tricky with special chars.
-        # Ideally use absolute path.
-        abs_sub_path = os.path.abspath(subtitles_path).replace("\\", "/") 
-        # On Windows, drive letters might be an issue in filter strings. 
-        # But this is Mac.
-        
-        # Determine filter type based on extension
-        if abs_sub_path.endswith(".ass"):
-            vf_filter = f"ass='{abs_sub_path}'"
-        else:
-            vf_filter = f"subtitles='{abs_sub_path}'"
-            
-        cmd.extend([
-            "-vf", vf_filter,
-            "-c:v", "libx264",
-            "-preset", "fast",
-            "-crf", "23" # Good quality
-        ])
-    else:
-        # Fast copy if no subtitles
-        cmd.extend(["-c:v", "copy"])
-
-    cmd.extend([
-        "-c:a", "aac",
-        "-map", "0:v:0",
-        "-map", "1:a:0",
-        "-shortest", # Ensure output stops when shortest stream ends
-        output_path
-    ])
     subprocess.run(cmd, check=True)
 
 def cleanup_temp_files(files: List[str]):
