@@ -43,3 +43,27 @@ Output location: `outputs/{timestamp}/your_audio_final.mp4`
 ## Configuration
 
 Visual styles (font, colors, background) can be adjusted in `config.py` and `templates.py`. The system uses the default style by default.
+
+## Streamlit Web App
+
+For a visual interface with real-time editing and configuration, use the Streamlit app.
+
+```bash
+uv run streamlit run app.py
+```
+
+### Key Features
+
+1.  **Interactive Editor**:
+    - Upload audio files directly.
+    - **Transcribe**: Uses Whisper to generate text.
+    - **Edit Transcript**: Modify the text in a simple text area. The system automatically reconciles your edits with the original audio timestamps.
+
+2.  **Visual Customization**:
+    - **Font Selection**: Choose from any font installed on your system.
+    - **Size & Colors**: Adjust font size, text color, highlight color, and background opacity.
+    - **Layout**: Fine-tune the vertical position of the captions.
+
+3.  **Smart Rendering**:
+    - Prevents font shrinking on long lines with smart text chunking.
+    - Generates high-quality 1080p, 60fps videos.
