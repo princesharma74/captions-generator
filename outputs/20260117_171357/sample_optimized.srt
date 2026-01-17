@@ -1,0 +1,96 @@
+1
+00:00:00,000 --> 00:00:01,600
+Today, I'll be telling you how
+
+2
+00:00:01,600 --> 00:00:03,540
+you can learn production level wipe
+
+3
+00:00:03,540 --> 00:00:03,800
+code.
+
+4
+00:00:04,000 --> 00:00:05,860
+So if you're using GitHub co
+
+5
+00:00:05,860 --> 00:00:07,760
+-pilot, then go to this website.
+
+6
+00:00:08,300 --> 00:00:10,800
+And if you're using some other
+
+7
+00:00:10,800 --> 00:00:11,860
+co -pilot,
+
+8
+00:00:11,860 --> 00:00:12,460
+for example,
+
+9
+00:00:12,600 --> 00:00:14,900
+Cloud Code Go -pilot,
+
+10
+00:00:15,040 --> 00:00:16,060
+you can go first,
+
+11
+00:00:16,320 --> 00:00:18,440
+read the documentation of both and
+
+12
+00:00:18,440 --> 00:00:20,420
+understand how they are actually being
+
+13
+00:00:20,420 --> 00:00:20,720
+used.
+
+14
+00:00:21,240 --> 00:00:21,720
+So you see,
+
+15
+00:00:21,960 --> 00:00:23,280
+going to the documentation,
+
+16
+00:00:23,580 --> 00:00:25,160
+they will tell you exactly how
+
+17
+00:00:25,160 --> 00:00:26,900
+their structure is.
+
+18
+00:00:26,900 --> 00:00:29,120
+Even in the nTi -ravities documentation
+
+19
+00:00:29,120 --> 00:00:32,260
+will find the standard method of
+
+20
+00:00:32,260 --> 00:00:34,620
+all those prompt examples and the
+
+21
+00:00:34,620 --> 00:00:36,080
+settings that you can do and
+
+22
+00:00:36,080 --> 00:00:38,260
+keep keeping the collection of their
+
+23
+00:00:38,260 --> 00:00:39,320
+prompts so that you can use
+
+24
+00:00:39,320 --> 00:00:39,500
+it.
+
